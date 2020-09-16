@@ -9,7 +9,7 @@ contract Cryptobets {
         Closed
     }
 
-    enum BetOption {None, Up, Down}
+    enum BetOption {None, Bear, Bull}
 
     struct Pool {
         PoolState state;
@@ -80,16 +80,16 @@ contract Cryptobets {
         pools[_poolId].state = PoolState.Closed;
 
         if (pools[_poolId].endPrice > pools[_poolId].startPrice) {
-            pools[_poolId].winner = BetOption.Up;
+            pools[_poolId].winner = BetOption.Bull;
         } else if (pools[_poolId].endPrice < pools[_poolId].startPrice) {
-            pools[_poolId].winner = BetOption.Down;
+            pools[_poolId].winner = BetOption.Bear;
         }
     }
 
     function placeBet(uint256 _poolId, BetOption _option) public payable {
         require(msg.value >= 1 ether, "Minimum bet value");
         require(pools[_poolId].state == PoolState.Open, "Invalid pool state");
-        require(_option == BetOption.Up || _option == BetOption.Down, "Invalid bet option");
+        require(_option == BetOption.Bull || _option == BetOption.Bear, "Invalid bet option");
 
         // Should be extended to accept increasing bets
         require(bets[_poolId][msg.sender].option == BetOption.None, "Bet already placed");
