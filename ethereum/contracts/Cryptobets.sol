@@ -99,9 +99,9 @@ contract Cryptobets {
             value: msg.value
         });
 
-        if (_option == BetOption.Up) {
+        if (_option == BetOption.Bull) {
             pools[_poolId].upBalance += msg.value;
-        } else if (_option == BetOption.Down) {
+        } else if (_option == BetOption.Bear) {
             pools[_poolId].downBalance += msg.value;
         }
     }
@@ -120,9 +120,9 @@ contract Cryptobets {
         Pool memory pool = pools[_poolId];
 
         uint256 winnerBalance;
-        if (pool.winner == BetOption.Up) {
+        if (pool.winner == BetOption.Bull) {
             winnerBalance = pool.upBalance;
-        } else if (pool.winner == BetOption.Down) {
+        } else if (pool.winner == BetOption.Bear) {
             winnerBalance = pool.downBalance;
         } else {
             assert(false);
