@@ -7,7 +7,9 @@ contract("Cryptobets", ([ownerWallet, wallet1, wallet2, wallet3]) => {
 
     // Pool creation by the owner
     const poolId = await contract.createPool.call(1, 2);
-    await contract.createPool(1, 2);
+    const createPoolTx = await contract.createPool(1, 2);
+
+    console.log(createPoolTx.logs)
 
     await contract.pools(poolId).then((pool) => {
       expect(pool.startTimestamp.toString()).equal("1");
@@ -45,28 +47,23 @@ contract("Cryptobets", ([ownerWallet, wallet1, wallet2, wallet3]) => {
     });
 
     // Winners withdrawal their prizes
-    const wallet1BalanceBefore = await web3.eth.getBalance(wallet1);
-    const wallet2BalanceBefore = await web3.eth.getBalance(wallet2);
+    const wallet1BalanceBefore = web3.utils.toBN(await web3.eth.getBalance(wallet1));
+    const wallet2BalanceBefore = web3.utils.toBN(await web3.eth.getBalance(wallet2));
 
     const withdrawTx1 = await contract.withdraw(poolId, { from: wallet1 });
     const withdrawTx2 = await contract.withdraw(poolId, { from: wallet2 });
 
-    const wallet1BalanceAfter = await web3.eth.getBalance(wallet1);
-    const wallet2BalanceAfter = await web3.eth.getBalance(wallet2);
+    const wallet1BalanceAfter = web3.utils.toBN(await web3.eth.getBalance(wallet1));
+    const wallet2BalanceAfter = web3.utils.toBN(await web3.eth.getBalance(wallet2));
 
-    const gasPrice = await web3.eth.getGasPrice();
+    const gasUsed1 = web3.utils.toBN(withdrawTx1.receipt.gasUsed);
+    const gasUsed2 = web3.utils.toBN(withdrawTx2.receipt.gasUsed);
+    const gasPrice = web3.utils.toBN(await web3.eth.getGasPrice());
 
-    const wallet1BalanceDelta =
-      wallet1BalanceAfter +
-      withdrawTx1.receipt.gasUsed * gasPrice -
-      wallet1BalanceBefore;
+    const wallet1BalanceDelta = wallet1BalanceAfter.add(gasUsed1.mul(gasPrice)).sub(wallet1BalanceBefore);
+    const wallet2BalanceDelta = wallet2BalanceAfter.add(gasUsed2.mul(gasPrice)).sub(wallet2BalanceBefore);
 
-    const wallet2BalanceDelta =
-      wallet2BalanceAfter +
-      withdrawTx2.receipt.gasUsed * gasPrice -
-      wallet2BalanceBefore;
-
-    expect(wallet1BalanceDelta).equal(web3.utils.toWei("3.564", "ether"));
-    expect(wallet2BalanceDelta).equal(web3.utils.toWei("5.346", "ether"));
+    expect(wallet1BalanceDelta.toString()).equal(web3.utils.toWei("3.564", "ether"));
+    expect(wallet2BalanceDelta.toString()).equal(web3.utils.toWei("5.346", "ether"));
   });
 });

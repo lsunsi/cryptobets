@@ -2,6 +2,8 @@
 pragma solidity ^0.7.0;
 
 contract Cryptobets {
+  event PoolCreated(uint256);
+
   enum PoolState { NotCreated, Open, InProgress, Closed }
   enum BetOption { None, Bear, Bull }
 
@@ -60,6 +62,8 @@ contract Cryptobets {
       winner: BetOption.None
     });
     pools[newPoolId] = newPool;
+
+    emit PoolCreated(newPoolId);
 
     return newPoolId;
   }
