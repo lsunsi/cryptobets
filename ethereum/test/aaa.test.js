@@ -1,5 +1,5 @@
 const { utils } = require("ethers");
-const { deployContract, MockProvider, solidity } = require("ethereum-waffle");
+const { deployContract, MockProvider } = require("ethereum-waffle");
 const Cryptobets = require("../build/contracts/Cryptobets.json");
 
 test("does it fucking work? wtf", async () => {
@@ -57,15 +57,23 @@ test("does it fucking work? wtf", async () => {
   const wallet1BalanceBefore = await wallet1.getBalance();
   const wallet2BalanceBefore = await wallet2.getBalance();
 
-  await contractWallet1.withdraw(poolId);
-  await contractWallet2.withdraw(poolId);
+  const pendingTx1 = await contractWallet1.withdraw(poolId);
+  const doneTx1 = await pendingTx1.wait();
+
+  const pendingTx2 = await contractWallet2.withdraw(poolId);
+  const doneTx2 = await pendingTx2.wait();
 
   const wallet1BalanceAfter = await wallet1.getBalance();
   const wallet2BalanceAfter = await wallet2.getBalance();
 
-  const wallet1BalanceDelta = wallet1BalanceAfter.sub(wallet1BalanceBefore);
-  expect(wallet1BalanceDelta).toEqual(utils.parseEther("3.564"));
+  const wallet1BalanceDelta = wallet1BalanceAfter
+    .add(pendingTx1.gasPrice.mul(doneTx1.gasUsed))
+    .sub(wallet1BalanceBefore);
 
-  const wallet2BalanceDelta = wallet2BalanceAfter - wallet2BalanceBefore;
-  expect(wallet2BalanceDelta).toBe(utils.parseEther("5.346"));
+  const wallet2BalanceDelta = wallet2BalanceAfter
+    .add(pendingTx2.gasPrice.mul(doneTx2.gasUsed))
+    .sub(wallet2BalanceBefore);
+
+  expect(wallet1BalanceDelta).toEqual(utils.parseEther("3.564"));
+  expect(wallet2BalanceDelta).toEqual(utils.parseEther("5.346"));
 });
